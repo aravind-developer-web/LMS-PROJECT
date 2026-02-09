@@ -1,0 +1,39 @@
+from django.db import models
+from django.conf import settings
+from apps.modules.models import Module
+
+class Assignment(models.Model):
+    STATUS_CHOICES = (
+        ('pending', 'Pending'),
+        ('in_progress', 'In Progress'),
+        ('completed', 'Completed'),
+        ('overdue', 'Overdue'),
+    )
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='assignments', on_delete=models.CASCADE)
+    module = models.ForeignKey(Module, related_name='assignments', on_delete=models.CASCADE)
+    assigned_by = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='created_assignments', on_delete=models.SET_NULL, null=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    due_date = models.DateTimeField(null=True, blank=True)
+    assigned_at = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.module.title}"
+
+class Submission(models.Model):
+    STATUS_CHOICES = (
+        ('pending', 'Pending'),
+        ('reviewed', 'Reviewed'),
+        ('graded', 'Graded'),
+    )
+
+    assignment = models.ForeignKey(Assignment, related_name='submissions', on_delete=models.CASCADE)
+    content = models.TextField()
+    submitted_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    feedback = models.TextField(blank=True, null=True)
+    grade = models.FloatField(null=True, blank=True)
+
+    def __str__(self):
+        return f"Submission for {self.assignment.module.title} by {self.assignment.user.username}"
